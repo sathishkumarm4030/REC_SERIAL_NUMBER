@@ -102,7 +102,7 @@ def write_excel_sheet(data_dict):
         sheet.cell(column=2, row=i, value=v)
         i+=1
     book.save(rec_book)
-    book.close()
+    #book.close()
 
 
 def Rec_ser_num():
