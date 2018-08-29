@@ -1,0 +1,115 @@
+import requests
+from Utils.Variables import *
+import errno
+import os
+import logging
+import logging.handlers
+import urllib3
+from openpyxl import load_workbook
+from openpyxl import Workbook
+from openpyxl.styles import Font
+import time
+import datetime
+from datetime import datetime
+from openpyxl.reader.excel import load_workbook
+from openpyxl.workbook import Workbook
+from openpyxl.styles import Color, Fill
+from openpyxl.cell import Cell
+
+urllib3.disable_warnings()
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+currtime = str(datetime.now())
+currtime =  currtime.replace(" ", "_").replace(":", "_").replace("-", "_").replace(".", "_")
+
+
+if __name__ == "__main__":
+    fileDir = os.path.dirname(os.path.dirname(os.path.realpath('__file__')))
+else:
+    fileDir = os.path.dirname(os.path.realpath('__file__'))
+
+rec_book = fileDir + '/Record.xlsx'
+
+logfile_dir = fileDir + "/LOGS/"+ vd_dict['ip'] + "_" + currtime + "/"
+if not os.path.exists(os.path.dirname(logfile_dir)):
+    try:
+        os.mkdir(os.path.dirname(logfile_dir))
+    except OSError as exc:  # Guard against race condition
+        if exc.errno != errno.EEXIST:
+            raise
+print fileDir
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+formatter1 = logging.Formatter("%(message)s")
+console = logging.StreamHandler()
+console.setLevel(logging.DEBUG)
+console.setFormatter(formatter1)
+logging.getLogger('').addHandler(console)
+
+
+def setup_logger(name, filename, level=logging.DEBUG):
+    log_file = logfile_dir + filename  + ".log"
+    handler = logging.FileHandler(log_file)
+    handler.setFormatter(formatter)
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+    logger = logging.getLogger(name)
+    return logger
+
+main_logger = setup_logger('Main', 'UpgradeVersaCpes')
+
+
+def get_device_dict():
+    global batch
+    response1 = requests.get(vdurl + appliance_url,
+                             auth=(user, passwd),
+                             headers=headers3,
+                             verify=False)
+    data1 = response1.json()
+    count, day, batch = 1, 1, 1
+    # print data1
+    device_dict = {}
+    for i in data1['versanms.ApplianceStatusResult']['appliances']:
+        try:
+            if i['Hardware']!="":
+                device_dict[i['name']] = i['Hardware']['serialNo']
+        except KeyError as ke:
+            print i['name']
+            print "Hardware Info NIL"
+            device_dict[i['name']] = "NIL"
+        #print count, day, batch
+        count +=1
+    # print devices_list
+    #main_logger.info(device_dict)
+    return device_dict
+
+def write_excel_sheet(data_dict):
+    try:
+        book = load_workbook(rec_book)
+    except:
+        book = Workbook()
+
+    currtime = str(datetime.now())
+    currtime =  currtime.replace(" ", "_").replace(":", "_").replace("-", "_").replace(".", "_")
+    print currtime
+    Day = currtime
+    sheet = book.create_sheet(Day, 0)
+    sheet.cell(column=1, row=1, value='DEVICE')
+    sheet.cell(column=2, row=1, value='SERIAL_NO')
+    i=2
+    for k, v in data_dict.iteritems():
+        sheet.cell(column=1, row=i, value=k)
+        sheet.cell(column=2, row=i, value=v)
+        i+=1
+    book.save(rec_book)
+    book.close()
+
+
+def Rec_ser_num():
+    write_excel_sheet(get_device_dict())
+
+
+# main()
+
+
+
