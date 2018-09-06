@@ -15,10 +15,18 @@ from openpyxl.reader.excel import load_workbook
 from openpyxl.workbook import Workbook
 # from openpyxl.styles import Color, Fill
 # from openpyxl.cell import Cell
+import smtplib
+from email.MIMEMultipart import MIMEMultipart
+from email.MIMEText import MIMEText
+from email.MIMEBase import MIMEBase
+from email import encoders
+
+
 
 urllib3.disable_warnings()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+currday = datetime.now().today().date().strftime("%d_%m_%Y")
 currtime = str(datetime.now())
 currtime =  currtime.replace(" ", "_").replace(":", "_").replace("-", "_").replace(".", "_")
 
@@ -29,7 +37,6 @@ else:
     fileDir = os.path.dirname(os.path.realpath('__file__'))
 
 rec_book = fileDir + '/Record.xlsx'
-
 logfile_dir = fileDir + "/LOGS/"+ vd_dict['ip'] + "_" + currtime + "/"
 if not os.path.exists(os.path.dirname(logfile_dir)):
     try:
@@ -38,6 +45,7 @@ if not os.path.exists(os.path.dirname(logfile_dir)):
         if exc.errno != errno.EEXIST:
             raise
 print fileDir
+daily_report_book = logfile_dir + currday + "_Record.xlsx"
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 formatter1 = logging.Formatter("%(message)s")
 console = logging.StreamHandler()
@@ -89,11 +97,11 @@ def write_excel_sheet(data_dict):
     except:
         book = Workbook()
 
-    currtime = str(datetime.now())
-    currtime =  currtime.replace(" ", "_").replace(":", "_").replace("-", "_").replace(".", "_")
-    print currtime
-    Day = currtime
-    sheet = book.create_sheet(Day, 0)
+    # currtime = str(datetime.now())
+    # currtime =  currtime.replace(" ", "_").replace(":", "_").replace("-", "_").replace(".", "_")
+    # print currtime
+    # Day = currtime
+    sheet = book.create_sheet(currday, 0)
     sheet.cell(column=1, row=1, value='DEVICE')
     sheet.cell(column=2, row=1, value='SERIAL_NO')
     i=2
@@ -103,10 +111,55 @@ def write_excel_sheet(data_dict):
         i+=1
     book.save(rec_book)
     #book.close()
+    try:
+        daily_book = load_workbook(daily_report_book)
+    except:
+        daily_book = Workbook()
+    sheet1 = daily_book.create_sheet(currday, 0)
+    sheet1.cell(column=1, row=1, value='DEVICE')
+    sheet1.cell(column=2, row=1, value='SERIAL_NO')
+    i=2
+    for k, v in data_dict.iteritems():
+        sheet1.cell(column=1, row=i, value=k)
+        sheet1.cell(column=2, row=i, value=v)
+        i+=1
+    book.save(daily_book)
+    #daily_book.close()
+
+def send_mail():
+    fromaddr = "sathishkumar.murugesan@colt.net"
+    toaddr = "sathishkumar.murugesan@colt.net"
+
+    msg = MIMEMultipart()
+
+    msg['From'] = fromaddr
+    msg['To'] = toaddr
+    msg['Subject'] = "Production VD appliances Serial number Recorded on " + currday
+
+    body = "."
+
+    msg.attach(MIMEText(body, 'plain'))
+
+    # filename = "Record.xlsx"
+    attachment = open(daily_report_book, "rb")
+
+    part = MIMEBase('application', 'octet-stream')
+    part.set_payload((attachment).read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition', "attachment; filename= %s" % daily_report_book)
+
+    msg.attach(part)
+
+    server = smtplib.SMTP('nv-mo01-pgt.nv.colt.net', 25)
+    server.starttls()
+    text = msg.as_string()
+    server.sendmail(fromaddr, toaddr, text)
+    server.quit()
 
 
 def Rec_ser_num():
     write_excel_sheet(get_device_dict())
+    send_mail()
 
 
 # main()
