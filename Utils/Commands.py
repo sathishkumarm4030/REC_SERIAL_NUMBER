@@ -123,7 +123,7 @@ def write_excel_sheet(data_dict):
         sheet1.cell(column=1, row=i, value=k)
         sheet1.cell(column=2, row=i, value=v)
         i+=1
-    book.save(daily_report_book)
+    daily_book.save(daily_report_book)
     #daily_book.close()
 
 def send_mail():
