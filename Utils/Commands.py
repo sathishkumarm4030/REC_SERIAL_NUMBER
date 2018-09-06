@@ -136,7 +136,8 @@ def send_mail():
     msg['To'] = toaddr
     msg['Subject'] = "Production VD appliances Serial number Recorded on " + currday
 
-    body = "."
+    body = "Current day record is attached in this Mail. " \
+           "All Days Log available in bastion <host : nv-bh01-pgt > <file: " + rec_book + ">"
 
     msg.attach(MIMEText(body, 'plain'))
 
