@@ -146,7 +146,7 @@ def send_mail():
     part = MIMEBase('application', 'octet-stream')
     part.set_payload((attachment).read())
     encoders.encode_base64(part)
-    part.add_header('Content-Disposition', "attachment; filename= %s" % daily_report_book)
+    part.add_header('Content-Disposition', "attachment; filename= %s" % currday + "_record.xlsx")
 
     msg.attach(part)
 
