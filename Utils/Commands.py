@@ -134,10 +134,11 @@ def send_mail():
 
     msg['From'] = fromaddr
     msg['To'] = toaddr
-    msg['Subject'] = "Production VD appliances Serial number Recorded on " + currday
+    msg['Subject'] = "Production VD appliance's Serial-number Recorded on " + currday
 
-    body = "Current day record is attached in this Mail. " \
-           "All Days Log available in bastion <host : nv-bh01-pgt > <file: " + rec_book + ">"
+    body = "Hi Team," \
+           "Current day record is attached in this Mail. \n" \
+           "All Days Log available in <bastion host : nv-bh01-pgt > <file: " + rec_book + ">.\n" \
 
     msg.attach(MIMEText(body, 'plain'))
 
