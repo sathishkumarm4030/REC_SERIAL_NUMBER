@@ -27,6 +27,7 @@ urllib3.disable_warnings()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 currday = datetime.now().today().date().strftime("%d_%m_%Y")
+currmonth = datetime.now().today().date().strftime("%m_%Y")
 currtime = str(datetime.now())
 currtime =  currtime.replace(" ", "_").replace(":", "_").replace("-", "_").replace(".", "_")
 
@@ -36,7 +37,7 @@ if __name__ == "__main__":
 else:
     fileDir = os.path.dirname(os.path.realpath('__file__'))
 
-rec_book = fileDir + '/Record.xlsx'
+rec_book = fileDir + '/' + currmonth + '_Record.xlsx'
 logfile_dir = fileDir + "/LOGS/"+ vd_dict['ip'] + "_" + currtime + "/"
 if not os.path.exists(os.path.dirname(logfile_dir)):
     try:
@@ -127,29 +128,32 @@ def write_excel_sheet(data_dict):
     #daily_book.close()
 
 def send_mail():
-    fromaddr = "sathishkumar.murugesan@colt.net"
-    toaddr = "sathishkumar.murugesan@colt.net"
+    fromaddr = "nv-bh01-pgt@colt.net"
+    #toaddr = ["sathishkumar.murugesan@colt.net"]
+    toaddr = ["Stefano.Campostrini@colt.net", "sathishkumar.murugesan@colt.net", "Radu.Dragomir@colt.net", "Manish.Kumar@colt.net", \
+		"Madhusudan.Narayanaswamy@colt.net", "Danny.Pinto@colt.net", "Ravidutt.Sharma@colt.net"]
+    #emails = ["mike@somewhere.org", "nedry@jp.net"]
 
     msg = MIMEMultipart()
 
     msg['From'] = fromaddr
-    msg['To'] = toaddr
+    msg['To'] = (', ').join(toaddr)
     msg['Subject'] = "Production VD appliance's Serial-number Recorded on " + currday
 
     body = "Hi Team,\n" \
-           "Current day record is attached in this Mail. \n" \
-           "All Days Log available in <bastion host : nv-bh01-pgt > <file: " + rec_book + ">.\n" \
+           "Current day & month record is attached in this Mail. \n" \
+           "ALL Records Logged & saved in  <bastion host : nv-bh01-pgt > <folder:/opt/script/REC_SERIAL_NUMBER/>.\n" \
            "<EOM>"
 
     msg.attach(MIMEText(body, 'plain'))
 
     # filename = "Record.xlsx"
-    attachment = open(daily_report_book, "rb")
+    attachment = open(rec_book, "rb")
 
     part = MIMEBase('application', 'octet-stream')
     part.set_payload((attachment).read())
     encoders.encode_base64(part)
-    part.add_header('Content-Disposition', "attachment; filename= %s" % currday + "_record.xlsx")
+    part.add_header('Content-Disposition', "attachment; filename= %s" % currmonth + "_record.xlsx")
 
     msg.attach(part)
 
